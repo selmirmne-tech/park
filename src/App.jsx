@@ -705,40 +705,12 @@ const handleExportHistoryPDF = () => {
   // 🔢 pomoćne za inline edit
   const sanitizeNum = (v) =>
     v === "" || v === null || isNaN(v) ? 0 : Number(v);
-  const recalcItem = (item) => {
-    const stanje = sanitizeNum(item.stanje_prethodno);
-    const ubaceno = sanitizeNum(item.ubaceno);
-    const kolicina = sanitizeNum(item.kolicina);
-    const cijena = sanitizeNum(item.cijena);
-    const ukupno = stanje + ubaceno;
-    const vrijednost = kolicina * cijena;
-    const ostalo = ukupno - kolicina;
-    return { ...item, ukupno, vrijednost, ostalo };
-  };
 
-
-  const saveArticleToDb = async (item) => {
-    const data = {
-      naziv: item.naziv || "",
-      jedinica_mjere: item.jedinica_mjere || "",
-      stanje_prethodno: sanitizeNum(item.stanje_prethodno),
-      ubaceno: sanitizeNum(item.ubaceno),
-      ukupno: sanitizeNum(item.ukupno),
-      kolicina: sanitizeNum(item.kolicina),
-      cijena: sanitizeNum(item.cijena),
-      vrijednost: sanitizeNum(item.vrijednost),
-      ostalo: sanitizeNum(item.ostalo),
-      datum_unosa: item.datum_unosa || formatDate(new Date()),
-    };
-    await set(ref(db, `Artikli/${item.redni_broj}`), data);
-  };
 
  
-  // 🔢 Računi ispod tabele (na ekranu)
-  const ukupnoVrijednost = artikli.reduce(
-    (sum, item) => sum + sanitizeNum(item.vrijednost),
-    0
-  );
+
+ 
+ 
  
  
 
