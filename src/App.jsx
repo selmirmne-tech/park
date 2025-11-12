@@ -170,9 +170,6 @@ useEffect(() => {
   const [smjena, setSmjena] = useState("");
   const [konobari, setKonobari] = useState("");
 
-  // 🆕 Polja za "Dodaj na stanju" (po artikal-ID → vrijednost inputa)
-  const [dodajNaStanjuInputs, setDodajNaStanjuInputs] = useState({});
-
   // 🕒 Automatsko osvežavanje datuma
   useEffect(() => {
     const updateDate = () => setDate(formatDate(new Date()));
@@ -275,34 +272,6 @@ const handleLoadHistory = async (datum, vrijeme) => {
 };
 
 
-
-  // 📥 Učitavanje artikala
-  const loadArtikli = async () => {
-    const artikliRef = ref(db, "Artikli");
-    onValue(artikliRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const arr = Object.entries(data).map(([key, val]) => ({
-          redni_broj: key,
-          ...val,
-        }));
-        setArtikli(arr);
-      } else {
-        setArtikli([]);
-      }
-    });
-  };
-
-  // 🔢 Dohvatanje sledećeg rednog broja
-  const getNextRedniBroj = async () => {
-    const snapshot = await get(ref(db, "Artikli"));
-    if (snapshot.exists()) {
-      const keys = Object.keys(snapshot.val()).map(Number);
-      return Math.max(...keys) + 1;
-    } else {
-      return 1;
-    }
-  };
 
   // ➕ Dodavanje novog artikla
   const [newItem, setNewItem] = useState({
@@ -473,9 +442,7 @@ const handleInputChange = (e, field, current, setCurrent) => {
     }
   };
 
-  // 📝 Uredi artikal (sekundarna forma — ostaje netaknuta)
-  const handleEdit = (item) => setEditItem({ ...item });
- 
+  
 const saveEditedItem = async () => {
   if (!isOnline) {
     alert("❌ Nema internet konekcije!");
@@ -775,72 +742,8 @@ const handleExportHistoryPDF = () => {
     await set(ref(db, `Artikli/${item.redni_broj}`), data);
   };
 
-  // 💾 Sačuvaj obračun (AŽURIRA ARTIKLE iz tabele, pa snimi Formu) — radi za sve korisnike
-  const handleSaveObracun = async () => {
-    try {
-      // 1) upiši sve artikle iz tabele u bazu (prema trenutnom stanju)
-      const recalculated = artikli.map(recalcItem);
-      await Promise.all(recalculated.map(saveArticleToDb));
+ 
 
-      // 2) snimi formu
-      const now = new Date();
-      const safeDate = date.replaceAll(".", "_");
-      const vrijeme = now
-        .toLocaleTimeString("sr-RS", { hour: "2-digit", minute: "2-digit" })
-        .replaceAll(":", "-");
-      const formaRef = ref(db, `Forma/${safeDate}/${vrijeme}`);
-
-      const ukupnoVrijednostLocal = recalculated.reduce(
-        (sum, item) => sum + sanitizeNum(item.vrijednost),
-        0
-      );
-      const zbirLocal = ukupnoVrijednostLocal + Number(kuhinja || 0);
-      const rashodLocal =
-        Number(dnevnice || 0) +
-        Number(osoblje || 0) +
-        Number(kuca || 0);
-
-      await set(formaRef, {
-        artikli: recalculated,
-        ukupno: ukupnoVrijednostLocal,
-        kuhinja: Number(kuhinja),
-        zbir: zbirLocal,
-        dnevnice: Number(dnevnice),
-        osoblje: Number(osoblje),
-        kuca: Number(kuca),
-        smjena: smjena || "",
-        konobari: konobari || "",
-        rashod: rashodLocal,
-        timestamp: `${String(now.getDate()).padStart(2, "0")}.${String(
-          now.getMonth() + 1
-        ).padStart(2, "0")}.${now.getFullYear()}-${String(
-          now.getHours()
-        ).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-      });
-      alert("✅ Obračun uspješno sačuvan!");
-	  
-	      // 🔧 Resetuj polja nakon uspješnog čuvanja
-    setKuhinja(0);
-    setDnevnice(0);
-    setOsoblje(0);
-    setKuca(0);
-    setSmjena("");
-    setKonobari("");
-
-	  
-	  
-	  
-    } catch (err) {
-      alert(`❌ Greška: ${err.message}`);
-    }
-  };
-
-  // ✏️ Inline edit u tabeli
-  const handleCellChange = (redni_broj, field, value) => {
-    // korisnik smije samo "kolicina"
-    if (!isAdmin && field !== "kolicina") return;
-    updateItemInState(redni_broj, { [field]: value });
-  };
 
   const handleCellCommit = async (redni_broj) => {
     if (!isAdmin) return; // običan korisnik upisuje tek na "Sačuvaj obračun"
@@ -856,11 +759,7 @@ const handleExportHistoryPDF = () => {
     }
   };
 
-  const handleCellKeyDown = async (e, redni_broj) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    await handleCellCommit(redni_broj);
-  };
+
 
   // 🔢 Računi ispod tabele (na ekranu)
   const ukupnoVrijednost = artikli.reduce(
@@ -868,8 +767,7 @@ const handleExportHistoryPDF = () => {
     0
   );
   const zbir = ukupnoVrijednost + Number(kuhinja || 0);
-  const rashod =
-    zbir - Number(dnevnice || 0) - Number(osoblje || 0) - Number(kuca || 0);
+ 
 
   // 🔐 Login forma
   if (!user)
