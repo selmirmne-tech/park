@@ -702,18 +702,7 @@ const handleExportHistoryPDF = () => {
     doc.save(`Obracun_${date}.pdf`);
   };
 
-  // 🔢 pomoćne za inline edit
-  const sanitizeNum = (v) =>
-    v === "" || v === null || isNaN(v) ? 0 : Number(v);
-
-
  
-
- 
- 
- 
- 
-
   // 🔐 Login forma
   if (!user)
     return (
