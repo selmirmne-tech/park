@@ -716,15 +716,6 @@ const handleExportHistoryPDF = () => {
     return { ...item, ukupno, vrijednost, ostalo };
   };
 
-  const updateItemInState = (redni_broj, patch) => {
-    setArtikli((prev) =>
-      prev.map((it) =>
-        String(it.redni_broj) === String(redni_broj)
-          ? recalcItem({ ...it, ...patch })
-          : it
-      )
-    );
-  };
 
   const saveArticleToDb = async (item) => {
     const data = {
@@ -743,30 +734,12 @@ const handleExportHistoryPDF = () => {
   };
 
  
-
-
-  const handleCellCommit = async (redni_broj) => {
-    if (!isAdmin) return; // običan korisnik upisuje tek na "Sačuvaj obračun"
-    const item = artikli.find(
-      (it) => String(it.redni_broj) === String(redni_broj)
-    );
-    if (!item) return;
-    const recalculated = recalcItem(item);
-    try {
-      await saveArticleToDb(recalculated);
-    } catch (err) {
-      alert(`❌ Greška pri snimanju: ${err.message}`);
-    }
-  };
-
-
-
   // 🔢 Računi ispod tabele (na ekranu)
   const ukupnoVrijednost = artikli.reduce(
     (sum, item) => sum + sanitizeNum(item.vrijednost),
     0
   );
-  const zbir = ukupnoVrijednost + Number(kuhinja || 0);
+ 
  
 
   // 🔐 Login forma
