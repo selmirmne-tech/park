@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-  "node": "18.x"
+  "engines": {
+  "node": "22.x"
 },
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
