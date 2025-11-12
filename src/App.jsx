@@ -539,8 +539,7 @@ const removeSerbianLetters = (text) => {
 };
 
   
-
-// 🧾 Export izabranog obračuna u PDF
+ // 🧾 Export izabranog obračuna u PDF
 const handleExportHistoryPDF = () => {
   if (!selectedDate || !selectedTime || !formaHistoryData) {
     alert("❌ Morate odabrati datum i vrijeme obračuna!");
@@ -549,7 +548,7 @@ const handleExportHistoryPDF = () => {
 
   try {
     const doc = new jsPDF("p", "pt", "a4", true);
-    doc.setFont("helvetica", "normal"); // koristi helvetica jer bolje prikazuje latinicu
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
 
     const prikazDatum = selectedDate.replaceAll("_", ".");
@@ -557,37 +556,41 @@ const handleExportHistoryPDF = () => {
 
     // 🔹 Naslov
     doc.setFontSize(18);
-    doc.text(removeSerbianLetters("Dnevni obracun pica"), 300, 40, { align: "center" });
+    doc.text(removeSerbianLetters("Dnevni obračun pića"), 300, 40, { align: "center" });
 
-    // 🔹 Desni ugao — konobari + vrijeme
+    // 🔹 Desni ugao — datum + vrijeme
     doc.setFontSize(12);
-    
     doc.text(removeSerbianLetters(`${prikazDatum} ${prikazVrijeme}`), 550, 75, {
       align: "right",
     });
 
-    // 🔹 Tabela sa artiklima
-    const headers = [
-      [
-        "#",
-        removeSerbianLetters("Naziv"),
-        removeSerbianLetters("Jedinica"),
-        removeSerbianLetters("Stanje prethodno"),
-        removeSerbianLetters("Novo"),
-        removeSerbianLetters("Ubačeno"),
-        removeSerbianLetters("Ukupno"),
-        removeSerbianLetters("Količina"),
-        removeSerbianLetters("Cijena"),
-        removeSerbianLetters("Vrijednost"),
-        removeSerbianLetters("Ostalo"),
-      ],
-    ];
-
+    // 🔹 Priprema podataka
     const artikliArray = formaHistoryData.artikli
       ? Object.values(formaHistoryData.artikli)
       : [];
 
-    const rows = artikliArray.map((it) => [
+    // 🔹 Prvi red (glavni naslovi)
+    const headRows = [
+      [
+        { content: "#", rowSpan: 2 },
+        { content: removeSerbianLetters("Naziv artikla"), rowSpan: 2 },
+        { content: removeSerbianLetters("Jedinica"), rowSpan: 2 },
+        { content: removeSerbianLetters("Stanje iz prethodne smjene"), rowSpan: 2 },
+        { content: removeSerbianLetters("Novo stanje"), rowSpan: 2 },
+        { content: removeSerbianLetters("Ubačeno"), rowSpan: 2 },
+        { content: removeSerbianLetters("Ukupno"), rowSpan: 2 },
+        { content: removeSerbianLetters("PRODATO"), colSpan: 3, styles: { halign: "center" } },
+        { content: removeSerbianLetters("Ostalo"), rowSpan: 2 },
+      ],
+      [
+        removeSerbianLetters("Količina"),
+        removeSerbianLetters("Cijena"),
+        removeSerbianLetters("Vrijednost"),
+      ],
+    ];
+
+    // 🔹 Redovi sa artiklima
+    const bodyRows = artikliArray.map((it) => [
       it.redni_broj || "",
       removeSerbianLetters(it.naziv || ""),
       removeSerbianLetters(it.jedinica_mjere || ""),
@@ -601,29 +604,30 @@ const handleExportHistoryPDF = () => {
       it.ostalo ?? "",
     ]);
 
+    // 🔹 Kreiraj tabelu
     autoTable(doc, {
-      head: headers,
-      body: rows,
+      head: headRows,
+      body: bodyRows,
       startY: 100,
       theme: "grid",
       styles: { font: "helvetica", fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [41, 128, 185] },
+      headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] },
     });
 
     // 🔹 Detalji ispod tabele
     const finalY = doc.lastAutoTable.finalY + 30;
     doc.setFontSize(13);
-    doc.text(removeSerbianLetters("Detalji obracuna"), 40, finalY);
+    doc.text(removeSerbianLetters("Detalji obračuna"), 40, finalY);
     doc.setFontSize(11);
 
     const detalji = [
-      `Obracun pica: ${formaHistoryData.ukupno || 0}`,
+      `Obračun pića: ${formaHistoryData.ukupno || 0}`,
       `Kuhinja: ${formaHistoryData.kuhinja || 0}`,
       `Ukupno: ${formaHistoryData.zbir || 0}`,
       "",
       `Dnevnice: ${formaHistoryData.dnevnice || 0}`,
       `Osoblje: ${formaHistoryData.osoblje || 0}`,
-      `Kuca: ${formaHistoryData.kuca || 0}`,
+      `Kuća: ${formaHistoryData.kuca || 0}`,
       `Ukupan rashod: ${
         (Number(formaHistoryData.dnevnice || 0) +
           Number(formaHistoryData.osoblje || 0) +
@@ -643,12 +647,14 @@ const handleExportHistoryPDF = () => {
       doc.text(removeSerbianLetters(line), 60, finalY + 20 + i * 18);
     });
 
+    // 💾 Sačuvaj PDF
     doc.save(`Obracun_${prikazDatum}_${prikazVrijeme}.pdf`);
   } catch (err) {
     console.error("❌ PDF ERROR:", err);
     alert("❌ Greška pri generisanju PDF-a. Pogledaj konzolu (F12).");
   }
 };
+
 
 
 
