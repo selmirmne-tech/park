@@ -55,7 +55,8 @@ const App = () => {
 
 	
 	
-	
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [date, setDate] = useState(formatDate(new Date()));
@@ -204,28 +205,17 @@ useEffect(() => {
     if (currentUser) {
       setUser(currentUser);
       setIsAdmin(currentUser.email.includes("admin"));
-
-      // 🔧 Resetuj vrijednosti svaki put kad se korisnik uloguje
-      setKuhinja(0);
-      setDnevnice(0);
-      setOsoblje(0);
-      setKuca(0);
-      setSmjena("");
-      setKonobari("");
     } else {
-      // 🔧 Kad se odjavi, očisti sve lokalne state-ove
       setUser(null);
-      setArtikli([]);
-      setKuhinja(0);
-      setDnevnice(0);
-      setOsoblje(0);
-      setKuca(0);
-      setSmjena("");
-      setKonobari("");
+      setIsAdmin(false);
     }
+
+    setAuthLoading(false); // 🔥 ključna linija
   });
+
   return () => unsubscribe();
 }, []);
+
 
 
 // 🔁 Uvijek prati promjene u bazi kada je korisnik ulogovan
@@ -733,6 +723,16 @@ const handleExportHistoryPDF = () => {
     doc.save(`Obracun_${date}.pdf`);
   };
 
+ 
+ 
+ // ⏳ Loading dok Firebase provjerava login sesiju
+if (authLoading) {
+  return (
+    <div className="vh-100 d-flex justify-content-center align-items-center">
+      <h3>Učitavanje...</h3>
+    </div>
+  );
+}
  
   // 🔐 Login forma
   if (!user)
