@@ -333,6 +333,31 @@ const handleLoadHistory = async (datum, vrijeme) => {
     }
   };
 
+
+const handleDecimalInput = (value, setter) => {
+  let val = value.replace(",", ".");
+
+  // ".5" -> "0.5"
+  if (/^\.[0-9]*$/.test(val)) {
+    val = "0" + val;
+  }
+
+  // dozvoli prelazno kucanje  "2", "2.", "2.5"
+  if (!/^[0-9]*\.?[0-9]*$/.test(val)) return;
+
+  // "2." -> samo prikaz, još nije broj
+  if (val.endsWith(".")) {
+    setter(val);
+    return;
+  }
+
+  // validan broj -> šaljemo broj
+  setter(val === "" ? "" : Number(val));
+};
+
+
+
+
   // 🔢 Promena inputa (novo i edit forme)
 const handleInputChange = (e, field, current, setCurrent) => {
   let val = e.target.value;
@@ -354,7 +379,7 @@ const handleInputChange = (e, field, current, setCurrent) => {
   const cijena = Number(updated.cijena || 0);
 
   updated.ukupno = stanje + ubaceno;
-  updated.vrijednost = kolicina * cijena;
+  updated.vrijednost = Number((kolicina * cijena).toFixed(2));
   updated.ostalo = updated.ukupno; // zadržavamo tvoju logiku
 
   setCurrent(updated);
@@ -923,37 +948,57 @@ const handleExportHistoryPDF = () => {
             />
           </div>
 
-          {/* Cijena (broj, bez spinera) */}
-          <div
-            className="col"
-            style={{
-              minWidth: "150px",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <label className="form-label fw-bold mb-1">Cijena</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              className="form-control"
-              placeholder="Cijena"
-              value={newItem.cijena}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === "" || /^[0-9]*[.,]?[0-9]*$/.test(val)) {
-                  handleInputChange(
-                    { target: { value: val.replace(",", ".") } },
-                    "cijena",
-                    newItem,
-                    setNewItem
-                  );
-                }
-              }}
-            />
-          </div>
+          
+	
+ 
+ 
+ {/* Cijena */}
+<div
+  className="col"
+  style={{
+    minWidth: "150px",
+    display: "flex",
+    flexDirection: "column",
+  }}
+>
+  <label className="form-label fw-bold mb-1">Cijena</label>
+  <input
+    type="text"
+    inputMode="decimal"
+    className="form-control"
+    placeholder="Cijena"
+    value={newItem.cijena}
+    onChange={(e) => {
+      let val = e.target.value;
 
+      // zamijeni zarez u tačku
+      val = val.replace(",", ".");
+
+      // 1️⃣ Dozvoli samo kucanje brojeva i eventualne jedne tačke
+      if (!/^[0-9]*\.?[0-9]*$/.test(val)) return;
+
+      // 2️⃣ Blokiraj nedovršene formate kada pokušamo slati handleru
+      // ali dozvoli prikaz u inputu
+      if (val === "." || val.endsWith(".")) {
+        setNewItem({ ...newItem, cijena: val });
+        return;
+      }
+
+      // 3️⃣ Ako je valjan broj — pošalji handleru
+      handleInputChange(
+        { target: { value: val } },
+        "cijena",
+        newItem,
+        setNewItem
+      );
+    }}
+  />
+</div>
+
+	
+	
+	
+		  
           {/* Ukupno (readonly) */}
           <div
             className="col"
@@ -1488,31 +1533,48 @@ const handleExportHistoryPDF = () => {
               item.kolicina
             )}
           </td>
+{/* Cijena */}
+<td>
+  {isEditing ? (
+    <input
+      type="text"
+      inputMode="decimal"
+      className="form-control form-control-sm"
+      value={editItem.cijena}
+      onChange={(e) => {
+        let val = e.target.value;
 
-          {/* Cijena */}
-          <td>
-            {isEditing ? (
-              <input
-                type="text"
-                inputMode="numeric"
-                className="form-control form-control-sm"
-                value={editItem.cijena}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "" || /^[0-9]*[.,]?[0-9]*$/.test(val)) {
-                    handleInputChange(
-                      { target: { value: val.replace(",", ".") } },
-                      "cijena",
-                      editItem,
-                      setEditItem
-                    );
-                  }
-                }}
-              />
-            ) : (
-              item.cijena
-            )}
-          </td>
+        // 1) Zamijeni zarez u tačku
+        val = val.replace(",", ".");
+
+        // 2) Ako počinje tačkom → pretvori u 0.x
+        if (/^\.[0-9]*$/.test(val)) {
+          val = "0" + val;
+        }
+
+        // 3) DOZVOLI faze kucanja: 2 , 2. , 2.5 
+        if (!/^[0-9]*\.?[0-9]*$/.test(val)) return;
+
+        // 4) Ako završava tačkom → nemoj još slati u handler
+        if (val.endsWith(".")) {
+          setEditItem({ ...editItem, cijena: val });
+          return;
+        }
+
+        // 5) Sada je valjan broj → šaljemo u handler
+        handleInputChange(
+          { target: { value: val } },
+          "cijena",
+          editItem,
+          setEditItem
+        );
+      }}
+    />
+  ) : (
+    item.cijena
+  )}
+</td>
+
 
           {/* Vrijednost */}
           <td>{isEditing ? editItem.vrijednost : item.vrijednost}</td>
@@ -1702,52 +1764,64 @@ const handleExportHistoryPDF = () => {
   </table>
 
 
-  {/* 🆕 Polja za unos dodatnih podataka */}
+
+ 
+ {/* 🆕 Polja za unos dodatnih podataka */}
 <div className="row g-2 mt-4">
+
+  {/* KUHINJA */}
   <div className="col-md-2">
     <label>Kuhinja</label>
     <input
-      inputMode="numeric"
-      pattern="[0-9]*"
+      type="text"
+      inputMode="decimal"
       className="form-control"
       placeholder="Zarada od kuhinje"
       value={kuhinja === 0 ? "" : kuhinja}
-      onChange={(e) => setKuhinja(Number(e.target.value) || 0)}
+      onChange={(e) => handleDecimalInput(e.target.value, setKuhinja)}
     />
   </div>
+
+  {/* DNEVNICE */}
   <div className="col-md-2">
     <label>Dnevnice</label>
     <input
-      inputMode="numeric"
-      pattern="[0-9]*"
+      type="text"
+      inputMode="decimal"
       className="form-control"
       placeholder="Dnevnice"
       value={dnevnice === 0 ? "" : dnevnice}
-      onChange={(e) => setDnevnice(Number(e.target.value) || 0)}
+      onChange={(e) => handleDecimalInput(e.target.value, setDnevnice)}
     />
   </div>
+
+  {/* OSOBLJE */}
   <div className="col-md-2">
     <label>Osoblje</label>
     <input
-      inputMode="numeric"
-      pattern="[0-9]*"
+      type="text"
+      inputMode="decimal"
       className="form-control"
       placeholder="Osoblje"
       value={osoblje === 0 ? "" : osoblje}
-      onChange={(e) => setOsoblje(Number(e.target.value) || 0)}
+      onChange={(e) => handleDecimalInput(e.target.value, setOsoblje)}
     />
   </div>
+
+  {/* KUĆA */}
   <div className="col-md-2">
     <label>Kuća</label>
     <input
-      inputMode="numeric"
-      pattern="[0-9]*"
+      type="text"
+      inputMode="decimal"
       className="form-control"
       placeholder="Kuća"
       value={kuca === 0 ? "" : kuca}
-      onChange={(e) => setKuca(Number(e.target.value) || 0)}
+      onChange={(e) => handleDecimalInput(e.target.value, setKuca)}
     />
   </div>
+
+  {/* SMJENA (NE DIRAMO) */}
   <div className="col-md-2">
     <label>Smjena</label>
     <input
@@ -1758,6 +1832,8 @@ const handleExportHistoryPDF = () => {
       onChange={(e) => setSmjena(e.target.value)}
     />
   </div>
+
+  {/* KONOBARI (NE DIRAMO) */}
   <div className="col-md-2">
     <label>Konobari</label>
     <input
@@ -1767,6 +1843,9 @@ const handleExportHistoryPDF = () => {
       value={konobari}
       onChange={(e) => setKonobari(e.target.value)}
     />
+  
+
+ 
   </div>
 </div>
 
@@ -1802,7 +1881,8 @@ onClick={async () => {
       const dodato = Number(unos.dodato) || 0;
       const cijena = Number(val.cijena) || 0;
 
-      ukupno += prodato * cijena; // sabiramo vrijednost prodatih artikala
+      ukupno += Number((prodato * cijena).toFixed(2));
+      // sabiramo vrijednost prodatih artikala
 
       let novo = Number(val.ostalo) || 0;
       let stanje_prethodno = Number(val.stanje_prethodno) || 0;
@@ -1810,7 +1890,7 @@ onClick={async () => {
 
       // --- PRODATO ---
       const kolicina = prodato;
-      const vrijednost = kolicina * cijena;
+      const vrijednost = Number((kolicina * cijena).toFixed(2));
       stanje_prethodno = stanje_prethodno - kolicina;
       let ukupnoNovo = stanje_prethodno + ubaceno;
       let ostalo = ukupnoNovo - kolicina;
@@ -1849,9 +1929,10 @@ onClick={async () => {
     const osobljeVal = Number(osoblje) || 0;
     const kucaVal = Number(kuca) || 0;
 
-    const zbir = ukupno + kuhinjaVal;
-    const rashod = dnevniceVal + osobljeVal + kucaVal;
-    const zarada = zbir - rashod;
+    const zbir = Number((ukupno + kuhinjaVal).toFixed(2));
+    const rashod = Number((dnevniceVal + osobljeVal + kucaVal).toFixed(2));
+    const zarada = Number((zbir - rashod).toFixed(2));
+
 
     // 📅 3️⃣ Kreiranje putanje Forma/{datum}/{vrijeme}
     const now = new Date();
