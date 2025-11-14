@@ -554,12 +554,15 @@ const removeSerbianLetters = (text) => {
 };
 
   
- // 🧾 Export izabranog obračuna u PDF
+// 🧾 Export izabranog obračuna u PDF
 const handleExportHistoryPDF = () => {
   if (!selectedDate || !selectedTime || !formaHistoryData) {
     alert("❌ Morate odabrati datum i vrijeme obračuna!");
     return;
   }
+
+  // 🔹 Helper za 2 decimale
+  const f2 = (n) => Number(n || 0).toFixed(2);
 
   try {
     const doc = new jsPDF("p", "pt", "a4", true);
@@ -604,19 +607,19 @@ const handleExportHistoryPDF = () => {
       ],
     ];
 
-    // 🔹 Redovi sa artiklima
+    // 🔹 Redovi sa artiklima — SVE zaokruženo na 2 decimale gdje je broj
     const bodyRows = artikliArray.map((it) => [
       it.redni_broj || "",
       removeSerbianLetters(it.naziv || ""),
       removeSerbianLetters(it.jedinica_mjere || ""),
-      it.stanje_prethodno ?? "",
-      it.novo ?? "",
-      it.ubaceno ?? "",
-      it.ukupno ?? "",
-      it.kolicina ?? "",
-      it.cijena ?? "",
-      it.vrijednost ?? "",
-      it.ostalo ?? "",
+      f2(it.stanje_prethodno),
+      f2(it.novo),
+      f2(it.ubaceno),
+      f2(it.ukupno),
+      f2(it.kolicina),
+      f2(it.cijena),
+      f2(it.vrijednost),
+      f2(it.ostalo),
     ]);
 
     // 🔹 Kreiraj tabelu
@@ -636,26 +639,26 @@ const handleExportHistoryPDF = () => {
     doc.setFontSize(11);
 
     const detalji = [
-      `Obračun pića: ${formaHistoryData.ukupno || 0}`,
-      `Kuhinja: ${formaHistoryData.kuhinja || 0}`,
-      `Ukupno: ${formaHistoryData.zbir || 0}`,
+      `Obračun pića: ${f2(formaHistoryData.ukupno)}`,
+      `Kuhinja: ${f2(formaHistoryData.kuhinja)}`,
+      `Ukupno: ${f2(formaHistoryData.zbir)}`,
       "",
-      `Dnevnice: ${formaHistoryData.dnevnice || 0}`,
-      `Osoblje: ${formaHistoryData.osoblje || 0}`,
-      `Kuća: ${formaHistoryData.kuca || 0}`,
-      `Ukupan rashod: ${
-        (Number(formaHistoryData.dnevnice || 0) +
-          Number(formaHistoryData.osoblje || 0) +
-          Number(formaHistoryData.kuca || 0)) || 0
-      }`,
+      `Dnevnice: ${f2(formaHistoryData.dnevnice)}`,
+      `Osoblje: ${f2(formaHistoryData.osoblje)}`,
+      `Kuća: ${f2(formaHistoryData.kuca)}`,
+      `Ukupan rashod: ${f2(
+        Number(formaHistoryData.dnevnice || 0) +
+        Number(formaHistoryData.osoblje || 0) +
+        Number(formaHistoryData.kuca || 0)
+      )}`,
       "",
-      `Zarada: ${
-        (Number(formaHistoryData.zbir || 0) -
-          Number(formaHistoryData.rashod || 0)) || 0
-      }`,
+      `Zarada: ${f2(
+        Number(formaHistoryData.zbir || 0) -
+        Number(formaHistoryData.rashod || 0)
+      )}`,
       "",
-      `Smjena: ${formaHistoryData.smjena || ""}`,
-      `Konobari: ${formaHistoryData.konobari || ""}`,
+      `Smjena: ${removeSerbianLetters(formaHistoryData.smjena || "")}`,
+      `Konobari: ${removeSerbianLetters(formaHistoryData.konobari || "")}`,
     ];
 
     detalji.forEach((line, i) => {
@@ -669,8 +672,6 @@ const handleExportHistoryPDF = () => {
     alert("❌ Greška pri generisanju PDF-a. Pogledaj konzolu (F12).");
   }
 };
-
-
 
 
 
