@@ -75,6 +75,23 @@ const [formaHistoryData, setFormaHistoryData] = useState(null);
 
  
   const [editItem, setEditItem] = useState(null);
+  // ⏳ Kada je edit mode aktivan → Enter = Sačuvaj
+useEffect(() => {
+  if (!editItem) return;
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveEditedItem();
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyPress);
+  return () => window.removeEventListener("keydown", handleKeyPress);
+}, [editItem]);
+
+  
+  
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [connectionMessage, setConnectionMessage] = useState("");
   const [latestObracunTime, setLatestObracunTime] = useState("");
@@ -234,6 +251,10 @@ useEffect(() => {
       setArtikli([]);
     }
   });
+  
+ 
+  
+  
 
   // 🔒 Prekid osluškivanja kada se korisnik odjavi
   return () => unsubscribe();
@@ -468,21 +489,36 @@ const saveEditedItem = async () => {
   const nazivTrim = trim(editItem.naziv);
   const jedinicaTrim = trim(editItem.jedinica_mjere);
 
-  // ✅ Provjera da nijedno polje nije prazno
-  if (
-    !nazivTrim ||
-    !jedinicaTrim ||
-    editItem.stanje_prethodno === "" ||
-    editItem.ubaceno === "" ||
-    editItem.kolicina === "" ||
-    editItem.cijena === ""
-  ) {
-    alert("❌ Nijedno polje ne smije biti prazno!");
+  // 🔎 INDIVIDUALNE VALIDACIJE (samo što si tražio)
+  if (!nazivTrim) {
+    alert("❌ Unesite naziv artikla!");
+    return;
+  }
+
+  // ❗ jedinica_mjere može biti prazna → ne provjerava se
+
+  if (editItem.stanje_prethodno === "") {
+    alert("❌ Unesite vrijednost za Stanje iz prethodne smjene!");
+    return;
+  }
+
+  if (editItem.ubaceno === "") {
+    alert("❌ Unesite vrijednost za Ubačeno!");
+    return;
+  }
+
+  if (editItem.kolicina === "") {
+    alert("❌ Unesite vrijednost za Količinu!");
+    return;
+  }
+
+  if (editItem.cijena === "") {
+    alert("❌ Unesite vrijednost za Cijenu!");
     return;
   }
 
   try {
-    // 🔍 Provjeri da li već postoji artikal sa istim nazivom (osim trenutnog)
+    // 🔍 Provjeri duplikat naziva (tvoj originalni kod)
     const snapshot = await get(ref(db, "Artikli"));
     if (snapshot.exists()) {
       const data = snapshot.val();
@@ -499,19 +535,24 @@ const saveEditedItem = async () => {
       }
     }
 
-    // ✅ Ako je sve u redu — sačuvaj u bazu
+    // ✅ Originalni izračuni i upis u bazu (ništa nisam dirao)
     await set(ref(db, `Artikli/${editItem.redni_broj}`), {
       ...editItem,
       naziv: nazivTrim,
-      jedinica_mjere: jedinicaTrim,
+      jedinica_mjere: jedinicaTrim, // može ostati prazno
       stanje_prethodno: Number(editItem.stanje_prethodno) || 0,
       ubaceno: Number(editItem.ubaceno) || 0,
       kolicina: Number(editItem.kolicina) || 0,
-      cijena: Number(editItem.cijena) || 0,
+
+ 
+      cijena: parseFloat(Number(editItem.cijena).toFixed(2)) || 0,
       ukupno: Number(editItem.stanje_prethodno) + Number(editItem.ubaceno),
-      vrijednost:
-        Number(editItem.kolicina) * Number(editItem.cijena) || 0,
-      ostalo: Number(editItem.stanje_prethodno) + Number(editItem.ubaceno),
+       vrijednost: parseFloat(
+  (Number(editItem.kolicina) * Number(editItem.cijena)).toFixed(2)
+) || 0,
+
+ostalo: Number(editItem.stanje_prethodno) + Number(editItem.ubaceno),
+
     });
 
     alert(`✅ Artikal "${nazivTrim}" uspješno ažuriran!`);
@@ -553,15 +594,14 @@ const removeSerbianLetters = (text) => {
     .replace(/Ž/g, "Z");
 };
 
-  
-// 🧾 Export izabranog obračuna u PDF
+  // 🧾 Export izabranog obračuna u PDF
 const handleExportHistoryPDF = () => {
   if (!selectedDate || !selectedTime || !formaHistoryData) {
     alert("❌ Morate odabrati datum i vrijeme obračuna!");
     return;
   }
 
-  // 🔹 Helper za 2 decimale
+  // 🔹 Helper za 2 decimale (koristi se samo gdje treba)
   const f2 = (n) => Number(n || 0).toFixed(2);
 
   try {
@@ -607,19 +647,29 @@ const handleExportHistoryPDF = () => {
       ],
     ];
 
-    // 🔹 Redovi sa artiklima — SVE zaokruženo na 2 decimale gdje je broj
+    // 🔹 BODY — bez zaokruživanja za određena polja
     const bodyRows = artikliArray.map((it) => [
       it.redni_broj || "",
       removeSerbianLetters(it.naziv || ""),
       removeSerbianLetters(it.jedinica_mjere || ""),
-      f2(it.stanje_prethodno),
-      f2(it.novo),
-      f2(it.ubaceno),
-      f2(it.ukupno),
-      f2(it.kolicina),
+
+      // ❌ BEZ f2 — originalna vrijednost
+      it.stanje_prethodno ?? "",
+      it.novo ?? "",
+      it.ubaceno ?? "",
+      it.ukupno ?? "",
+
+      // ❌ Prodato (količina) — BEZ f2
+      it.kolicina ?? "",
+
+      // ✔️ Cijena — ostaje f2
       f2(it.cijena),
+
+      // ✔️ Vrijednost — ostaje f2
       f2(it.vrijednost),
-      f2(it.ostalo),
+
+      // ❌ Ostalo — BEZ f2
+      it.ostalo ?? "",
     ]);
 
     // 🔹 Kreiraj tabelu
@@ -678,51 +728,81 @@ const handleExportHistoryPDF = () => {
 
 
 
+// 🧾 Export PDF (trenutno stanje)
+const handleExportPDF = () => {
+  try {
+    const doc = new jsPDF("p", "pt", "a4", true);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
 
+    const prikazVrijeme = latestObracunTime || "N/A";
 
-  // 🧾 Export PDF
-  const handleExportPDF = () => {
-    const doc = new jsPDF("l", "pt", "a4");
-    doc.setFontSize(14);
-    const prikazVrijeme = latestObracunTime || "Datum nije učitan iz baze";
-    doc.text(`Caffe "Park" – Dnevni obračun (${prikazVrijeme})`, 40, 40);
+    // 🔹 Naslov
+    doc.setFontSize(18);
+    doc.text(
+      removeSerbianLetters(`Trenutno stanje – Zadnji obračun (${prikazVrijeme})`),
+      300,
+      40,
+      { align: "center" }
+    );
 
-    const headers = [
+    doc.setFontSize(11);
+
+    // 🔹 Priprema podataka
+    const f2 = (n) => Number(n || 0).toFixed(2);
+
+    const artikliArray = artikli || [];
+
+    // 🔹 Header tabele – isti stil kao u historiji
+    const headRows = [
       [
-        "#",
-        "Naziv",
-        "Jedinica",
-        "Stanje prethodno",
-        "Ubačeno",
-        "Ukupno",
-        "Količina",
-        "Cijena",
-        "Vrijednost",
-        "Ostalo",
+        { content: "#", rowSpan: 2 },
+        { content: removeSerbianLetters("Naziv artikla"), rowSpan: 2 },
+        { content: removeSerbianLetters("Jedinica"), rowSpan: 2 },
+        { content: removeSerbianLetters("Stanje iz prethodne smjene"), rowSpan: 2 },
+        { content: removeSerbianLetters("Novo stanje"), rowSpan: 2 },
+        { content: removeSerbianLetters("Ubačeno"), rowSpan: 2 },
+        { content: removeSerbianLetters("Ukupno"), rowSpan: 2 },
+        { content: removeSerbianLetters("PRODATO"), colSpan: 3, styles: { halign: "center" } },
+        { content: removeSerbianLetters("Ostalo"), rowSpan: 2 },
+      ],
+      [
+        removeSerbianLetters("Količina"),
+        removeSerbianLetters("Cijena"),
+        removeSerbianLetters("Vrijednost"),
       ],
     ];
-    const rows = artikli.map((item) => [
-      item.redni_broj,
-      item.naziv,
-      item.jedinica_mjere,
-      item.stanje_prethodno,
-      item.ubaceno,
-      item.ukupno,
-      item.kolicina,
-      item.cijena,
-      item.vrijednost,
-      item.ostalo,
+
+    // 🔹 Body
+    const bodyRows = artikliArray.map((it) => [
+      it.redni_broj,
+      removeSerbianLetters(it.naziv || ""),
+      removeSerbianLetters(it.jedinica_mjere || ""),
+      it.stanje_prethodno ?? "",
+      it.novo ?? "",
+      it.ubaceno ?? "",
+      it.ukupno ?? "",
+      it.kolicina ?? "",
+      f2(it.cijena),
+      f2(it.vrijednost),
+      it.ostalo ?? "",
     ]);
+
     autoTable(doc, {
-      head: headers,
-      body: rows,
-      startY: 60,
+      head: headRows,
+      body: bodyRows,
+      startY: 80,
       theme: "grid",
-      styles: { fontSize: 9, cellPadding: 4 },
-      headStyles: { fillColor: [22, 160, 133] },
+      styles: { font: "helvetica", fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] },
     });
-    doc.save(`Obracun_${date}.pdf`);
-  };
+
+    doc.save(`Trenutno_stanje_${prikazVrijeme}.pdf`);
+  } catch (err) {
+    console.error("PDF ERROR:", err);
+    alert("❌ Greška pri generisanju PDF-a. Pogledaj konzolu (F12).");
+  }
+};
 
  
  
