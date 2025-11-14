@@ -918,7 +918,8 @@ if (authLoading) {
 		
 {/* 🆕 Forma za novi artikal */}
 {showNewItemForm && isAdmin && (
-  <div className="card mb-3 p-3 border-primary">
+   <div className="card mb-3 mt-3 p-3 border-primary">
+
     <h5>🆕 Novi artikal</h5>
 
     {/* ✅ Omotan za horizontalni scroll (skriven ali aktivan) */}
