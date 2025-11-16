@@ -7,7 +7,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 //Unicode podrska za srpska slova
 
 import { initializeApp } from "firebase/app";
-import logo from "./images/parkslika2.jpg";
+import logo from "./images/parkslika2.png";
 import {
   getDatabase,
   ref,
