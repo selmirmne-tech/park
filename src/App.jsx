@@ -139,7 +139,7 @@ useEffect(() => {
       const [da, ma, ya] = a.split("_").map(Number);
       const [db, mb, yb] = b.split("_").map(Number);
       const dateA = new Date(ya, ma - 1, da);
-      const dateB = new Date(yb, mb - 1, db_);
+      const dateB = new Date(yb, mb - 1, db);
       return dateB - dateA; // najnoviji prvi
     });
 
