@@ -137,7 +137,7 @@ useEffect(() => {
     // ✅ sortiraj datume u formatu DD_MM_YYYY
     const sortedDates = datumi.sort((a, b) => {
       const [da, ma, ya] = a.split("_").map(Number);
-      const [db_, mb, yb] = b.split("_").map(Number);
+      const [db, mb, yb] = b.split("_").map(Number);
       const dateA = new Date(ya, ma - 1, da);
       const dateB = new Date(yb, mb - 1, db_);
       return dateB - dateA; // najnoviji prvi
