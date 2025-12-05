@@ -1148,13 +1148,18 @@ if (authLoading) {
         }}
       >
         <option value="">-- Odaberite datum --</option>
-        {Object.keys(formeDatumi)
-          .sort((a, b) => b.localeCompare(a)) // najnoviji prvi
-          .map((d) => (
-            <option key={d} value={d}>
-              {d.replaceAll("_", ".")}
-            </option>
-          ))}
+      {Object.keys(formeDatumi)
+  .sort((a, b) => {
+    const [da, ma, ya] = a.split("_").map(Number);
+    const [db, mb, yb] = b.split("_").map(Number);
+
+    return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+  })
+  .map((d) => (
+    <option key={d} value={d}>
+      {d.replaceAll("_", ".")}
+    </option>
+  ))}
       </select>
     </div>
 
