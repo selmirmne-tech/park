@@ -59,7 +59,7 @@ const App = () => {
 
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [date, setDate] = useState(formatDate(new Date()));
+ 
   const [artikli, setArtikli] = useState([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -189,13 +189,7 @@ useEffect(() => {
   const [smjena, setSmjena] = useState("");
   const [konobari, setKonobari] = useState("");
 
-  // 🕒 Automatsko osvežavanje datuma
-  useEffect(() => {
-    const updateDate = () => setDate(formatDate(new Date()));
-    updateDate();
-    const timer = setInterval(updateDate, 60 * 1000);
-    return () => clearInterval(timer);
-  }, []);
+ 
 
   // 🌐 Status konekcije
   useEffect(() => {
