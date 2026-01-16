@@ -536,24 +536,20 @@ const saveEditedItem = async () => {
     }
 
     // ✅ Originalni izračuni i upis u bazu (ništa nisam dirao)
-    await set(ref(db, `Artikli/${editItem.redni_broj}`), {
-      ...editItem,
-      naziv: nazivTrim,
-      jedinica_mjere: jedinicaTrim, // može ostati prazno
-      stanje_prethodno: Number(editItem.stanje_prethodno) || 0,
-      ubaceno: Number(editItem.ubaceno) || 0,
-      kolicina: Number(editItem.kolicina) || 0,
+await set(ref(db, `Artikli/${editItem.redni_broj}`), {
+  ...editItem,
+  naziv: nazivTrim,
+  jedinica_mjere: jedinicaTrim,
+  stanje_prethodno: Number(editItem.ostalo) || 0, // trenutno stanje
+  ubaceno: Number(editItem.ubaceno) || 0,
+  kolicina: Number(editItem.kolicina) || 0,
+  cijena: parseFloat(Number(editItem.cijena).toFixed(2)) || 0,
+  ukupno: Number(editItem.ostalo) + Number(editItem.ubaceno), // novo ukupno stanje
+  vrijednost: parseFloat((Number(editItem.kolicina) * Number(editItem.cijena)).toFixed(2)) || 0,
+  novo: Number(editItem.ostalo) - Number(editItem.kolicina) + Number(editItem.ubaceno), // novo stanje
+  ostalo: Number(editItem.ostalo) - Number(editItem.kolicina) + Number(editItem.ubaceno),
+});
 
- 
-      cijena: parseFloat(Number(editItem.cijena).toFixed(2)) || 0,
-      ukupno: Number(editItem.stanje_prethodno) + Number(editItem.ubaceno),
-       vrijednost: parseFloat(
-  (Number(editItem.kolicina) * Number(editItem.cijena)).toFixed(2)
-) || 0,
-
-ostalo: Number(editItem.stanje_prethodno) + Number(editItem.ubaceno),
-
-    });
 
     alert(`✅ Artikal "${nazivTrim}" uspješno ažuriran!`);
     setEditItem(null);
@@ -2015,40 +2011,45 @@ onClick={async () => {
 	*/
 	
 	
-	Object.entries(data).forEach(([key, val]) => {
+Object.entries(data).forEach(([key, val]) => {
   const unos = prodatoInputs[key] || {};
   const prodato = Number(unos.prodato) || 0;
   const dodato = Number(unos.dodato) || 0;
   const cijena = Number(val.cijena) || 0;
 
-  // Stanje prije ove smjene
-  const stanje_prethodno = Number(val.ostalo) || 0;
-
-  // Prodano i vrijednost prodaje
+  // Backend logika — izračun za čuvanje
+  const prethodnoStanje = Number(val.ostalo) || 0;
   const kolicina = prodato;
   const vrijednost = Number((kolicina * cijena).toFixed(2));
+  const novoStanje = prethodnoStanje - prodato + dodato;
 
-  // Novo stanje nakon prodaje i dodavanja
-  const novo_stanje = stanje_prethodno - prodato + dodato;
+  // 🔹 Zadržavamo originalne vrednosti koje tabela prikazuje
+  const originalStanjePrethodno = val.stanje_prethodno ?? 0;
+  const originalUbaceno = val.ubaceno ?? 0;
+  const originalUkupno = val.ukupno ?? 0;
+  const originalOstalo = val.ostalo ?? 0;
+  const originalNovo = val.novo ?? 0;
 
-  // Ažuriranje za Firebase
+  // 🔹 Ažuriranje za Firebase
   updates[`Artikli/${key}/kolicina`] = kolicina;
   updates[`Artikli/${key}/vrijednost`] = vrijednost;
-  updates[`Artikli/${key}/stanje_prethodno`] = stanje_prethodno;
+  updates[`Artikli/${key}/stanje_prethodno`] = prethodnoStanje; // backend logika
   updates[`Artikli/${key}/ubaceno`] = dodato;
-  updates[`Artikli/${key}/ukupno`] = novo_stanje;
-  updates[`Artikli/${key}/ostalo`] = novo_stanje;
+  updates[`Artikli/${key}/ukupno`] = novoStanje;
+  updates[`Artikli/${key}/ostalo`] = novoStanje;
+  updates[`Artikli/${key}/novo`] = prethodnoStanje; // ili val.ostalo
 
-  // Artikli za Forma/{datum}/{vrijeme}/artikli
+  // 🔹 Artikli za Forma/{datum}/{vrijeme}/artikli
   artikliObj[key] = {
     ...val,
     kolicina,
     vrijednost,
-    stanje_prethodno,
-    ubaceno: dodato,
-    ukupno: novo_stanje,
-    ostalo: novo_stanje,
-    novo: val.ostalo, // ili ako želiš, može biti stanje prije ove smjene
+    // ❌ Tabela ostaje ista: ne dira frontend prikaz
+    stanje_prethodno: originalStanjePrethodno,
+    ubaceno: originalUbaceno,
+    ukupno: originalUkupno,
+    ostalo: originalOstalo,
+    novo: originalNovo,
   };
 });
 
