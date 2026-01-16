@@ -1962,6 +1962,8 @@ onClick={async () => {
     // 📦 1️⃣ Pripremi Artikle i računaj ukupno
     const artikliObj = {};
 
+
+/*
     Object.entries(data).forEach(([key, val]) => {
       const unos = prodatoInputs[key] || {};
       const prodato = Number(unos.prodato) || 0;
@@ -2009,6 +2011,47 @@ onClick={async () => {
         novo,
       };
     });
+	
+	*/
+	
+	
+	Object.entries(data).forEach(([key, val]) => {
+  const unos = prodatoInputs[key] || {};
+  const prodato = Number(unos.prodato) || 0;
+  const dodato = Number(unos.dodato) || 0;
+  const cijena = Number(val.cijena) || 0;
+
+  // Stanje prije ove smjene
+  const stanje_prethodno = Number(val.ostalo) || 0;
+
+  // Prodano i vrijednost prodaje
+  const kolicina = prodato;
+  const vrijednost = Number((kolicina * cijena).toFixed(2));
+
+  // Novo stanje nakon prodaje i dodavanja
+  const novo_stanje = stanje_prethodno - prodato + dodato;
+
+  // Ažuriranje za Firebase
+  updates[`Artikli/${key}/kolicina`] = kolicina;
+  updates[`Artikli/${key}/vrijednost`] = vrijednost;
+  updates[`Artikli/${key}/stanje_prethodno`] = stanje_prethodno;
+  updates[`Artikli/${key}/ubaceno`] = dodato;
+  updates[`Artikli/${key}/ukupno`] = novo_stanje;
+  updates[`Artikli/${key}/ostalo`] = novo_stanje;
+
+  // Artikli za Forma/{datum}/{vrijeme}/artikli
+  artikliObj[key] = {
+    ...val,
+    kolicina,
+    vrijednost,
+    stanje_prethodno,
+    ubaceno: dodato,
+    ukupno: novo_stanje,
+    ostalo: novo_stanje,
+    novo: val.ostalo, // ili ako želiš, može biti stanje prije ove smjene
+  };
+});
+
 
     // 🧮 2️⃣ Izračunavanje finansijskih podataka
     const kuhinjaVal = Number(kuhinja) || 0;
