@@ -2032,7 +2032,7 @@ Object.entries(data).forEach(([key, val]) => {
   updates[`Artikli/${key}/ubaceno`] = dodato;
   updates[`Artikli/${key}/ukupno`] = novoStanje;
   updates[`Artikli/${key}/ostalo`] = novoStanje;
-  updates[`Artikli/${key}/novo`] = prethodnoStanje; // ili val.ostalo
+  updates[`Artikli/${key}/novo`] = novoStanje; // ili val.ostalo
 
   // 🔹 Artikli za Forma/{datum}/{vrijeme}/artikli
   artikliObj[key] = {
