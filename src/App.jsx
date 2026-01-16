@@ -59,7 +59,7 @@ const App = () => {
 
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  //const [date, setDate] = useState(formatDate(new Date()));
+  const [date, setDate] = useState(formatDate(new Date()));
   const [artikli, setArtikli] = useState([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
