@@ -1954,7 +1954,7 @@ onClick={async () => {
     const artikliObj = {};
 
 
-/*
+
     Object.entries(data).forEach(([key, val]) => {
       const unos = prodatoInputs[key] || {};
       const prodato = Number(unos.prodato) || 0;
@@ -2003,9 +2003,9 @@ onClick={async () => {
       };
     });
 	
-	*/
 	
 	
+	/*
 Object.entries(data).forEach(([key, val]) => {
   const unos = prodatoInputs[key] || {};
   const prodato = Number(unos.prodato) || 0;
@@ -2047,7 +2047,7 @@ Object.entries(data).forEach(([key, val]) => {
     novo: originalNovo,
   };
 });
-
+*/
 
     // 🧮 2️⃣ Izračunavanje finansijskih podataka
     const kuhinjaVal = Number(kuhinja) || 0;
