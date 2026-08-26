@@ -2002,7 +2002,7 @@ onClick={async () => {
       ukupno += Number((prodato * cijena).toFixed(2));
       // sabiramo vrijednost prodatih artikala
 
-      const novo = Number(val.ostalo || 0) - prodato + dodato;
+      let novo = Number(val.ostalo) || 0;
       let stanje_prethodno = Number(val.stanje_prethodno) || 0;
       let ubaceno = Number(val.ubaceno) || 0;
 
