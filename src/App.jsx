@@ -1113,12 +1113,14 @@ if (authLoading) {
 			
 {/* 🕓 Pregled prethodnih obračuna */}
 <div className="mb-3 mt-3">
-  <button
-    className="btn btn-secondary"
-    onClick={() => setShowHistory((prev) => !prev)}
-  >
-    {showHistory ? "✖ Zatvori pregled obračuna" : "🕓 Pregled obračuna"}
-  </button>
+<button
+  className="btn btn-secondary"
+  onClick={handleOpenHistory}
+>
+  {showHistory
+    ? "✖ Zatvori pregled obračuna"
+    : "🕓 Pregled obračuna"}
+</button>
 </div>
 
 
@@ -2083,6 +2085,50 @@ Object.entries(data).forEach(([key, val]) => {
 
     // 🔥 5️⃣ Upis u bazu (sve ili ništa)
     await update(ref(db), updates);
+	
+	// 🔄 Odmah osvježi listu sačuvanih obračuna
+
+
+const handleOpenHistory = async () => {
+  try {
+    // Ako je već otvoreno, samo zatvori
+    if (showHistory) {
+      setShowHistory(false);
+      return;
+    }
+
+    // 🔄 Svježe učitaj sve obračune iz Firebase-a
+    const snapshot = await get(ref(db, "Forma"));
+
+    if (snapshot.exists()) {
+      setFormeDatumi(snapshot.val());
+    } else {
+      setFormeDatumi({});
+    }
+
+    // Očisti prethodni izbor
+    setSelectedDate("");
+    setSelectedTime("");
+    setArtikliHistory([]);
+    setFormaHistoryData(null);
+
+    // Otvori pregled
+    setShowHistory(true);
+  } catch (err) {
+    console.error("Greška pri učitavanju obračuna:", err);
+    alert("❌ Greška pri učitavanju sačuvanih obračuna.");
+  }
+};
+
+
+
+const formaSnapshot = await get(ref(db, "Forma"));
+
+if (formaSnapshot.exists()) {
+  setFormeDatumi(formaSnapshot.val());
+} else {
+  setFormeDatumi({});
+}
 
     // ✅ Ako je uspjelo — resetuj sve unose
     setProdatoInputs({});
