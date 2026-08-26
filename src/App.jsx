@@ -2002,43 +2002,42 @@ onClick={async () => {
       ukupno += Number((prodato * cijena).toFixed(2));
       // sabiramo vrijednost prodatih artikala
 
-      let novo = Number(val.ostalo) || 0;
-      let stanje_prethodno = Number(val.stanje_prethodno) || 0;
-      let ubaceno = Number(val.ubaceno) || 0;
+     // 📦 Stanje prije ovog obračuna = prethodno "ostalo"
+const prethodnoStanje = Number(val.ostalo || 0);
 
-      // --- PRODATO ---
-      const kolicina = prodato;
-      const vrijednost = Number((kolicina * cijena).toFixed(2));
-      stanje_prethodno = stanje_prethodno - kolicina;
-      let ukupnoNovo = stanje_prethodno + ubaceno;
-      let ostalo = ukupnoNovo - kolicina;
+// 📦 Prodato u ovom obračunu
+const kolicina = prodato;
 
-      // --- DODATO ---
-      stanje_prethodno = stanje_prethodno + ubaceno;
-      ubaceno = dodato;
-      ukupnoNovo = stanje_prethodno + ubaceno;
-      ostalo = ukupnoNovo;
+// 💰 Vrijednost prodaje
+const vrijednost = Number((kolicina * cijena).toFixed(2));
 
-      // 📘 Artikli za glavni čvor
-      updates[`Artikli/${key}/kolicina`] = kolicina;
-      updates[`Artikli/${key}/vrijednost`] = vrijednost;
-      updates[`Artikli/${key}/stanje_prethodno`] = stanje_prethodno;
-      updates[`Artikli/${key}/ubaceno`] = ubaceno;
-      updates[`Artikli/${key}/ukupno`] = ukupnoNovo;
-      updates[`Artikli/${key}/ostalo`] = ostalo;
-      updates[`Artikli/${key}/novo`] = novo;
+// 📦 Novo ubačeno
+const ubacenoNovo = dodato;
+
+// 📦 Ukupno raspoloživo nakon dodavanja
+const ukupnoNovo = prethodnoStanje + ubacenoNovo;
+
+// 📦 Konačno stanje nakon prodaje
+const ostaloNovo = ukupnoNovo - kolicina;
+
+   // 📘 Artikli za glavni čvor
+updates[`Artikli/${key}/kolicina`] = kolicina;
+updates[`Artikli/${key}/vrijednost`] = vrijednost;
+updates[`Artikli/${key}/stanje_prethodno`] = prethodnoStanje;
+updates[`Artikli/${key}/ubaceno`] = ubacenoNovo;
+updates[`Artikli/${key}/ukupno`] = ukupnoNovo;
+updates[`Artikli/${key}/ostalo`] = ostaloNovo;
 
       // 📘 Artikli i za Forma/{datum}/{vrijeme}/artikli
-      artikliObj[key] = {
-        ...val,
-        kolicina,
-        vrijednost,
-        stanje_prethodno,
-        ubaceno,
-        ukupno: ukupnoNovo,
-        ostalo,
-        novo,
-      };
+   artikliObj[key] = {
+  ...val,
+  kolicina,
+  vrijednost,
+  stanje_prethodno: prethodnoStanje,
+  ubaceno: ubacenoNovo,
+  ukupno: ukupnoNovo,
+  ostalo: ostaloNovo,
+};
     });
 	
 	
