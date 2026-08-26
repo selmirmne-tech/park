@@ -2020,22 +2020,35 @@ const ukupnoNovo = prethodnoStanje + ubacenoNovo;
 // 📦 Konačno stanje nakon prodaje
 const ostaloNovo = ukupnoNovo - kolicina;
 
-   // 📘 Artikli za glavni čvor
+// 📘 Ažuriranje glavnog čvora
 updates[`Artikli/${key}/kolicina`] = kolicina;
 updates[`Artikli/${key}/vrijednost`] = vrijednost;
 updates[`Artikli/${key}/stanje_prethodno`] = prethodnoStanje;
 updates[`Artikli/${key}/ubaceno`] = ubacenoNovo;
 updates[`Artikli/${key}/ukupno`] = ukupnoNovo;
+updates[`Artikli/${key}/novo`] = ostaloNovo;
 updates[`Artikli/${key}/ostalo`] = ostaloNovo;
+     
 
-      // 📘 Artikli i za Forma/{datum}/{vrijeme}/artikli
-   artikliObj[key] = {
+	 // 📘 Artikli i za Forma/{datum}/{vrijeme}/artikli
+  
+console.log("FORMA ARTIKAL:", {
+  naziv: val.naziv,
+  prethodnoStanje,
+  ubacenoNovo,
+  ukupnoNovo,
+  kolicina,
+  ostaloNovo,
+});
+
+  artikliObj[key] = {
   ...val,
   kolicina,
   vrijednost,
   stanje_prethodno: prethodnoStanje,
   ubaceno: ubacenoNovo,
   ukupno: ukupnoNovo,
+  novo: ostaloNovo,
   ostalo: ostaloNovo,
 };
     });
